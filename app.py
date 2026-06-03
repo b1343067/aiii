@@ -24,14 +24,15 @@ st.subheader("第八組專題：總體政策模擬與未來推演系統")
 with st.sidebar:
     st.header("📂 情境資料庫")
     scenario = st.selectbox("快速載入歷史情境", [
-        "2026年6月 最新總經現況", 
+        "最新總經現況", 
         "自訂輸入 (當前現況)", 
         "2022 疫情後大通膨", 
         "2008 金融海嘯"
     ])
     
-    if scenario == "2026年6月 最新總經現況":
-        def_val, debt_val, cpi_val, rate_val = 6.0, 105.0, 2.4, 3.5
+    # 根據選擇載入對應數據 (已更新為指定數據)
+    if scenario == "最新總經現況":
+        def_val, debt_val, cpi_val, rate_val = 6.0, 123.0, 3.8, 3.5
     elif scenario == "2022 疫情後大通膨":
         def_val, debt_val, cpi_val, rate_val = 12.3, 120.0, 9.1, 2.5
     elif scenario == "2008 金融海嘯":
@@ -147,12 +148,12 @@ if analyze_btn:
         else:
             st.info("⚖️ **市場觀望**：政策中立，大盤預期區間震盪，建議維持定期定額。")
             
-    # [Tab 3] 未來三個季度推演 (新增線圖)
+    # [Tab 3] 未來三個季度推演
     with tab3:
         st.markdown("### 🔮 基於當前 State 的未來經濟路徑推演模型")
         
-        # 1. 定義時間序列與預測邏輯
-        periods = ["當前 (Now)", "Q1 (預測)", "Q2 (預測)", "Q3 (預測)"]
+        # 定義時間序列與預測邏輯
+        periods = ["0. 當前 (Now)", "1. Q1 (預測)", "2. Q2 (預測)", "3. Q3 (預測)"]
         
         if inflation > 3.0 and deficit_gdp > 5.0:
             # 高通膨+高赤字：螺旋上升
@@ -175,7 +176,7 @@ if analyze_btn:
             desc_3 = "成功脫離流動性陷阱，通膨溫和回升至 2% 目標。"
             
         elif inflation <= 3.0 and deficit_gdp > 5.0:
-            # 軟著陸但財政拖累 (2026 現況)
+            # 軟著陸但財政拖累
             cpi_trend = [inflation, inflation+0.2, inflation+0.5, inflation+0.8] 
             rate_trend = [policy_rate, policy_rate, policy_rate+0.25, policy_rate+0.25] 
             def_trend = [deficit_gdp, deficit_gdp, deficit_gdp+0.2, deficit_gdp+0.5] 
@@ -194,7 +195,7 @@ if analyze_btn:
             desc_2 = "企業投資意願穩定，失業率維持低檔。"
             desc_3 = "國家經濟維持健康擴張步調。"
 
-        # 2. 建立 DataFrame 並繪製折線圖
+        # 建立 DataFrame 並繪製折線圖
         df_forecast = pd.DataFrame({
             "預估通膨率 CPI (%)": cpi_trend,
             "預估基準利率 (%)": rate_trend,
@@ -244,12 +245,11 @@ if analyze_btn:
     st.markdown("#### 🏆 MARL 系統獎勵函數 (Reward) 評估")
     st.write("Agent 在多智能體強化學習中，透過最大化總體經濟的穩定性來獲取最高 Reward。")
     
-    # 【優化計分板標籤】：解決 85 分卻顯示「決策極佳」的矛盾
     if reward_score >= 90:
         score_label = "決策極佳"
         label_color = "normal"
     elif reward_score >= 80:
-        score_label = "良好但具隱患" # 修改這裡，完美呼應財政拖累風險！
+        score_label = "良好但具隱患" 
         label_color = "normal"
     elif reward_score >= 60:
         score_label = "狀態普通，需盡快調整"
