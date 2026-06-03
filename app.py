@@ -16,14 +16,13 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 st.title("🏦 財政與貨幣政策協調 AI Agent")
-st.subheader("第八組專題：總體政策模擬決策系統")
+st.subheader("第八組專題：總體政策模擬與未來推演系統")
 
 # ==========================================
 # 側邊欄：一鍵載入歷史經典情境與數據輸入
 # ==========================================
 with st.sidebar:
     st.header("📂 情境資料庫")
-    # 專業版命名，無贅字
     scenario = st.selectbox("快速載入歷史情境", [
         "2026年6月 最新總經現況", 
         "自訂輸入 (當前現況)", 
@@ -33,7 +32,7 @@ with st.sidebar:
     
     # 根據選擇載入對應數據
     if scenario == "2026年6月 最新總經現況":
-        # 2026 最新真實數據：Fed 點陣圖 + CBO 財政展望
+        # 2026 最新真實預測數據：Fed 點陣圖 + CBO 財政展望
         def_val, debt_val, cpi_val, rate_val = 6.0, 105.0, 2.4, 3.5
     elif scenario == "2022 疫情後大通膨":
         def_val, debt_val, cpi_val, rate_val = 12.3, 120.0, 9.1, 2.5
@@ -50,7 +49,7 @@ with st.sidebar:
     inflation = st.slider("通膨率 CPI (%)", min_value=-5.0, max_value=15.0, value=float(cpi_val), step=0.1)
     policy_rate = st.slider("政策基準利率 (%)", min_value=0.0, max_value=10.0, value=float(rate_val), step=0.1)
     
-    analyze_btn = st.button("啟動 AI 決策演算法")
+    analyze_btn = st.button("啟動 AI 決策與未來預測")
     
     st.markdown("---")
     st.caption(f"🕒 系統最後同步時間：{datetime.now().strftime('%Y-%m-%d %H:%M')}")
@@ -106,30 +105,28 @@ with col2:
 st.divider()
 
 # ==========================================
-# AI 輸出區 (Action & Reward)
+# AI 輸出區 (Action, Forecast & Reward)
 # ==========================================
 if analyze_btn:
-    with st.spinner('🤖 AI Agent 正在進行政策模擬與協調性運算...'):
+    with st.spinner('🤖 AI Agent 正在進行政策模擬與未來趨勢推演...'):
         time.sleep(1.5) 
-    st.toast('決策分析完成！', icon='✅')
+    st.toast('未來推演分析完成！', icon='✅')
     
-    st.write("## 🎯 AI Agent 決策報告 (Action)")
+    st.write("## 🎯 AI Agent 預測與決策報告 (Action & Forecast)")
     
-    tab1, tab2 = st.tabs(["🎯 政策協調與調整建議", "📈 資本市場影響 (股市/債市)"])
+    # 加入第三個核心 Tab：未來推演
+    tab1, tab2, tab3 = st.tabs(["🎯 當前政策協調評估", "📈 資本市場影響 (股市/債市)", "🔮 未來三個季度推演"])
     
     is_conflict = False
     
-    # [Tab 1] 政策協調性分析 + 調整建議
+    # [Tab 1] 當前政策協調性分析
     with tab1:
         st.markdown("### 1. 政策協調性評估")
-        
         if inflation < 0.0 and monetary_stance == "極度寬鬆" and deficit_gdp > 5.0:
             st.success("✅ **非常規政策協調 (危機應對)**：系統偵測到通縮與衰退危機，央行已啟動極度寬鬆救市。此時政府擴大財政支出是必要手段，雙寬鬆政策完美協調。")
         elif inflation > 3.0 and deficit_gdp > 5.0:
             st.error("❌ **政策衝突 (不協調)**：系統偵測到通膨依然高於目標，但政府卻維持高赤字 (大撒幣)。擴張性財政政策將抵銷抗通膨的努力！建議政府必須縮減支出，配合央行步調。")
             is_conflict = True
-        elif inflation <= 3.0 and deficit_gdp > 5.0 and ("緊縮" in monetary_stance):
-            st.warning("⚠️ **財政拖累風險**：通膨已逐漸受控，央行維持高利率，但政府赤字依然過高。這將導致市場利率居高不下，引發長期排擠效應。")
         elif inflation > 2.0 and ("寬鬆" in monetary_stance):
             st.error("❌ **嚴重不協調**：目前通膨偏高，但貨幣政策卻放水，等於提油救火，將導致通膨失控。")
             is_conflict = True
@@ -140,14 +137,6 @@ if analyze_btn:
             st.warning("⚠️ **過度緊縮風險**：通膨已偏低且財政保守，若央行仍持續升息，恐壓抑經濟動能。")
         else:
             st.success("✅ **目前政策尚屬協調**：貨幣與財政步調相對一致，有助於維持總體經濟穩定。")
-            
-        st.divider()
-        
-        st.markdown("### 2. 排擠效應與調整建議")
-        if inflation < 0.0:
-            st.write("由於目前處於通縮與流動性陷阱邊緣，民間投資意願低落。此時政府擴大支出**不會產生排擠效應**。👉 **建議財政部持續發力刺激需求**。")
-        else:
-            st.write("若政府在此刻擴大財政刺激，預計會導致市場利率居高不下，進而產生**排擠效應 (Crowding-out Effect)**。👉 **強烈建議政府縮減赤字，防止債務負擔加劇並讓渡資金給民間投資**。")
         
     # [Tab 2] 資本市場分析
     with tab2:
@@ -160,6 +149,30 @@ if analyze_btn:
             st.error("📉 **債市預測**：降息預期將帶動既有債券價格上漲，但新發行債券的殖利率將下滑。")
         else:
             st.info("⚖️ **市場觀望**：目前政策偏向中立，市場將回歸基本面檢視，大盤預期呈現區間震盪，建議維持既有步調與定期定額策略。")
+            
+    # [Tab 3] 未來三個季度推演 (教授要求的新功能)
+    with tab3:
+        st.markdown("### 🔮 基於當前 State 的未來經濟路徑推演")
+        if inflation > 3.0 and deficit_gdp > 5.0:
+            st.error("🚨 **預測結果：【高通膨與高赤字螺旋】**")
+            st.markdown("- **近期 (1-3個月)**：通膨預期僵化，央行被迫宣布持續升息。")
+            st.markdown("- **中期 (3-6個月)**：高赤字導致政府大舉發債籌資，長天期公債殖利率狂飆。")
+            st.markdown("- **遠期 (6-9個月)**：爆發嚴重**排擠效應**，民間企業融資成本過高引發倒閉潮，經濟面臨『硬著陸』風險。")
+        elif inflation < 0.0 and monetary_stance == "極度寬鬆" and deficit_gdp > 5.0:
+            st.success("🚀 **預測結果：【完美雙寬鬆復甦】**")
+            st.markdown("- **近期 (1-3個月)**：央行流動性注入市場，恐慌情緒消退，資產價格止跌回穩。")
+            st.markdown("- **中期 (3-6個月)**：政府財政擴張帶動基礎建設與就業，民眾實質購買力回升。")
+            st.markdown("- **遠期 (6-9個月)**：成功脫離流動性陷阱，通膨溫和回升至 2% 目標，經濟實現強勁復甦。")
+        elif inflation <= 3.0 and deficit_gdp > 5.0 and ("緊縮" in monetary_stance or "中立" in monetary_stance):
+            st.warning("⚠️ **預測結果：【財政拖累與排擠效應發酵】**")
+            st.markdown("- **近期 (1-3個月)**：通膨雖受控，但政府持續發行巨額公債，開始吸乾市場流動性。")
+            st.markdown("- **中期 (3-6個月)**：民間企業發覺市場資金變少、融資困難，實質民間投資(I)開始出現衰退。")
+            st.markdown("- **遠期 (6-9個月)**：高息與高債務雙重夾擊，若不縮減赤字，經濟將從目前的『軟著陸』轉為『停滯性增長』。")
+        else:
+            st.info("⚖️ **預測結果：【平穩擴張期】**")
+            st.markdown("- **近期 (1-3個月)**：政策協調良好，通膨與利率維持在良性區間。")
+            st.markdown("- **中期 (3-6個月)**：企業投資意願穩定，失業率維持低檔。")
+            st.markdown("- **遠期 (6-9個月)**：預期企業獲利穩健成長，國家經濟維持健康擴張步調。")
         
     st.divider()
     
@@ -180,7 +193,7 @@ if analyze_btn:
     # 2. 財政健康度評估 (排除通縮救市時的高赤字特例)
     if deficit_gdp > 5.0 and inflation >= 0:
         reward_score -= 15
-        score_reasons.append("排擠效應風險 (-15)")
+        score_reasons.append("排擠效應隱憂 (-15)")
 
     # 3. 政策協調度評估 (Action)
     if is_conflict:
@@ -197,14 +210,14 @@ if analyze_btn:
     st.markdown("#### 🏆 MARL 系統獎勵函數 (Reward) 評估")
     st.write("Agent 在多智能體強化學習中，透過最大化總體經濟的穩定性來獲取最高 Reward。")
     
-    st.metric(label="Agent 當前決策網路總得分", value=f"{reward_score} / 100", 
-              delta="決策極佳" if reward_score >= 85 else ("需調整政策" if reward_score < 70 else "狀態普通"), 
-              delta_color="normal" if reward_score >= 70 else "inverse")
+    st.metric(label="Agent 預測未來經濟穩定總得分", value=f"{reward_score} / 100", 
+              delta="決策極佳" if reward_score >= 85 else ("未來具備隱患，需調整政策" if reward_score < 75 else "狀態普通"), 
+              delta_color="normal" if reward_score >= 75 else "inverse")
     
-    st.caption(f"🧠 **模型算分依據**：基礎分數 100 分。本次結算包含：{', '.join(score_reasons)}。")
+    st.caption(f"🧠 **模型算分依據**：基礎分數 100 分。本次預測結算包含：{', '.join(score_reasons)}。")
 
 else:
-    st.info("👈 請於左側設定觀測指標，並點擊『啟動 AI 決策演算法』")
+    st.info("👈 請於左側設定觀測指標，並點擊『啟動 AI 決策與未來預測』")
 
 # ==========================================
 # 理論補充區
@@ -212,8 +225,8 @@ else:
 with st.expander("📚 系統核心理論與 MARL 架構對照 (點擊展開)"):
     st.markdown("""
     **本系統基於《貨幣銀行學》理論與 MARL 架構開發：**
-    * **Agent (智能體)**：G8 財政貨幣協調決策系統。
+    * **Agent (智能體)**：G8 財政貨幣協調決策與預測系統。
     * **State (狀態)**：左側輸入之赤字率、債務比、通膨率與利率。
-    * **Policy (策略)**：透過實質利率判定貨幣立場，並比對赤字水位判斷是否發生衝突。
-    * **Reward (獎勵)**：將通膨、赤字與政策協調度量化為具體分數，驅使 Agent 追求經濟穩定。
+    * **Policy (策略)**：透過實質利率判定貨幣立場，並預測未來的政策交互影響。
+    * **Reward (獎勵)**：將未來的通膨、赤字與排擠效應量化為具體分數，驅使 Agent 尋求最佳政策路徑。
     """)
