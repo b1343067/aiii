@@ -68,7 +68,8 @@ elif policy_rate < inflation - 0.5:
     monetary_stance = "寬鬆 (降息)"
     rate_desc = f"基準利率 {policy_rate}%"
 else:
-    monetary_stance = "中立抗通膨"
+    # 這裡已經修正為「中立」，解決畫面排版被切斷的問題
+    monetary_stance = "中立"
     rate_desc = f"基準利率 {policy_rate}%"
 
 # ==========================================
