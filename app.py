@@ -23,9 +23,19 @@ st.subheader("第八組專題：總體政策模擬決策系統")
 # ==========================================
 with st.sidebar:
     st.header("📂 情境資料庫")
-    scenario = st.selectbox("快速載入歷史情境", ["自訂輸入 (當前現況)", "2022 疫情後大通膨", "2008 金融海嘯"])
+    # 將「6月最新預測」加入選單並作為第一個預設選項
+    scenario = st.selectbox("快速載入歷史情境", [
+        "2026年6月 最新預測 (教授指定)", 
+        "自訂輸入 (當前現況)", 
+        "2022 疫情後大通膨", 
+        "2008 金融海嘯"
+    ])
     
-    if scenario == "2022 疫情後大通膨":
+    # 根據選擇載入對應數據
+    if scenario == "2026年6月 最新預測 (教授指定)":
+        # 黃金預測數據：克里夫蘭聯準會 CPI 預測 + CBO 財政預測
+        def_val, debt_val, cpi_val, rate_val = 5.8, 101.0, 3.9, 4.5
+    elif scenario == "2022 疫情後大通膨":
         def_val, debt_val, cpi_val, rate_val = 12.3, 120.0, 9.1, 2.5
     elif scenario == "2008 金融海嘯":
         def_val, debt_val, cpi_val, rate_val = 9.8, 67.0, -0.4, 0.25
@@ -58,7 +68,7 @@ elif policy_rate < inflation - 0.5:
     monetary_stance = "寬鬆 (降息)"
     rate_desc = f"基準利率 {policy_rate}%"
 else:
-    monetary_stance = "中性"
+    monetary_stance = "中立抗通膨"
     rate_desc = f"基準利率 {policy_rate}%"
 
 # ==========================================
@@ -87,7 +97,7 @@ with col2:
     if inflation < 0.0:
         st.error("❄️ 觀測狀態：嚴重通縮與衰退風險，建議『全面寬鬆與擴張刺激』")
     elif inflation > 3.0:
-        st.warning("⚠️ 觀測狀態：高通膨，系統優先尋求『緊縮協調』")
+        st.warning("⚠️ 觀測狀態：通膨偏高，系統優先尋求『緊縮協調』以穩定物價")
     elif deficit_gdp > 5.0:
         st.warning("🚨 觀測狀態：財政赤字偏高，啟動『排擠效應』風險預警")
     else:
@@ -105,19 +115,18 @@ if analyze_btn:
     
     st.write("## 🎯 AI Agent 決策報告 (Action)")
     
-    # 【修改重點】拔除圖表，精簡為兩個高含金量的 Tabs
     tab1, tab2 = st.tabs(["🎯 政策協調與調整建議", "📈 資本市場影響 (股市/債市)"])
     
     is_conflict = False
     
-    # [Tab 1] 政策協調性分析 + 調整建議 (整併)
+    # [Tab 1] 政策協調性分析 + 調整建議
     with tab1:
         st.markdown("### 1. 政策協調性評估")
         
         if inflation < 0.0 and monetary_stance == "極度寬鬆" and deficit_gdp > 5.0:
-            st.success("✅ **非常規政策協調 (危機應對)**：系統偵測到通縮與衰退危機，央行已啟動極度寬鬆 (如 QE) 救市。此時政府擴大財政支出是必要手段，雙寬鬆政策完美協調。")
-        elif inflation > 3.0 and monetary_stance == "緊縮 (升息)" and deficit_gdp > 5.0:
-            st.error("❌ **政策衝突 (不協調)**：央行正在『升息』打通膨，但政府卻維持高赤字 (大撒幣)，兩者作用互相抵銷！建議政府應縮減支出以配合央行。")
+            st.success("✅ **非常規政策協調 (危機應對)**：系統偵測到通縮與衰退危機，央行已啟動極度寬鬆救市。此時政府擴大財政支出是必要手段，雙寬鬆政策完美協調。")
+        elif inflation > 3.0 and deficit_gdp > 5.0:
+            st.error("❌ **政策衝突 (不協調)**：系統偵測到通膨依然高於目標，但政府卻維持高赤字 (大撒幣)。擴張性財政政策將抵銷抗通膨的努力！建議政府必須縮減支出，配合央行步調。")
             is_conflict = True
         elif inflation > 2.0 and ("寬鬆" in monetary_stance):
             st.error("❌ **嚴重不協調**：目前通膨偏高，但貨幣政策卻放水，等於提油救火，將導致通膨失控。")
@@ -136,16 +145,16 @@ if analyze_btn:
         if inflation < 0.0:
             st.write("由於目前處於通縮與流動性陷阱邊緣，民間投資意願低落。此時政府擴大支出**不會產生排擠效應**。👉 **建議財政部持續發力刺激需求**。")
         else:
-            st.write("若政府在此刻擴大財政刺激，預計會導致市場利率上升，進而產生**排擠效應**。👉 **建議央行應維持目前利率水準，防止債務貨幣化**。")
+            st.write("若政府在此刻擴大財政刺激，預計會導致市場利率居高不下，進而產生**排擠效應 (Crowding-out Effect)**。👉 **強烈建議政府縮減赤字，防止債務負擔加劇並讓渡資金給民間投資**。")
         
     # [Tab 2] 資本市場分析
     with tab2:
         st.markdown("### 資本市場風向預測")
-        if "緊縮" in monetary_stance:
-            st.error("📉 **股市預警**：高利率環境將大幅提升企業資金成本。對於大型科技股的估值將面臨下修壓力。建議關注大盤指數 ETF (如 VOO) 分散風險，並觀察大盤 30 週/50 週長天期均線是否有跌破風險，作為防禦性減碼依據。")
-            st.success("📈 **債市預測**：由於處於升息循環，債券殖利率將維持高檔，短天期公債具備吸引力。")
+        if inflation > 3.0 or "緊縮" in monetary_stance:
+            st.error("📉 **股市預警**：通膨與高利率環境將大幅提升企業資金成本。對於大型科技股的估值將面臨下修壓力。建議關注大盤指數 ETF (如 VOO) 分散風險，並轉向防禦性板塊。")
+            st.success("📈 **債市預測**：由於處於高息環境，債券殖利率將維持高檔，短天期公債 (如 TLT/SHY) 具備防禦性吸引力。")
         elif "寬鬆" in monetary_stance:
-            st.success("📈 **股市利多**：資金成本降低將有效挹注市場流動性。大盤指數 ETF有望受惠於資金行情，科技巨頭預期將迎來強勁反彈。技術面上，若大盤突破 30 週均線可視為長線佈局訊號。")
+            st.success("📈 **股市利多**：資金成本降低將有效挹注市場流動性。大盤指數 ETF 有望受惠於資金行情，科技巨頭預期將迎來強勁反彈。")
             st.error("📉 **債市預測**：降息預期將帶動既有債券價格上漲，但新發行債券的殖利率將下滑。")
         else:
             st.info("⚖️ **市場觀望**：目前政策偏向中立，市場將回歸基本面檢視，大盤預期呈現區間震盪，建議維持既有步調與定期定額策略。")
@@ -155,7 +164,7 @@ if analyze_btn:
     # ==========================================
     # 神級優化：MARL 系統獎勵函數 (Reward) 算分機制
     # ==========================================
-    reward_score = 100 # 設定基礎分數為 100
+    reward_score = 100 
     score_reasons = []
 
     # 1. 總體環境狀態評估 (State)
@@ -176,18 +185,16 @@ if analyze_btn:
         reward_score -= 30
         score_reasons.append("政策衝突懲罰 (-30)")
     elif inflation < 0.0 and monetary_stance == "極度寬鬆" and deficit_gdp > 5.0:
-        reward_score += 15 # 完美救市給予加分補償
+        reward_score += 15 
         score_reasons.append("危機完美救市獎勵 (+15)")
     else:
         score_reasons.append("政策維持協調 (+0)")
 
-    # 確保分數上限不超過 100 分
     reward_score = min(reward_score, 100)
 
     st.markdown("#### 🏆 MARL 系統獎勵函數 (Reward) 評估")
     st.write("Agent 在多智能體強化學習中，透過最大化總體經濟的穩定性來獲取最高 Reward。")
     
-    # 顯示總得分
     st.metric(label="Agent 當前決策網路總得分", value=f"{reward_score} / 100", 
               delta="決策極佳" if reward_score >= 85 else ("需調整政策" if reward_score < 70 else "狀態普通"), 
               delta_color="normal" if reward_score >= 70 else "inverse")
@@ -205,6 +212,6 @@ with st.expander("📚 系統核心理論與 MARL 架構對照 (點擊展開)"):
     **本系統基於《貨幣銀行學》理論與 MARL 架構開發：**
     * **Agent (智能體)**：G8 財政貨幣協調決策系統。
     * **State (狀態)**：左側輸入之赤字率、債務比、通膨率與利率。
-    * **Policy (策略)**：透過實質利率 (基準利率-通膨率) 判定貨幣立場，並比對赤字水位判斷是否發生衝突。
+    * **Policy (策略)**：透過實質利率判定貨幣立場，並比對赤字水位判斷是否發生衝突。
     * **Reward (獎勵)**：將通膨、赤字與政策協調度量化為具體分數，驅使 Agent 追求經濟穩定。
     """)
