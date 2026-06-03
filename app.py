@@ -32,7 +32,7 @@ with st.sidebar:
     ])
     
     # 根據選擇載入對應數據
-    if scenario == "2026年6月 最新預測 (教授指定)":
+    if scenario == "2026年最新預測 ":
         # 黃金預測數據：克里夫蘭聯準會 CPI 預測 + CBO 財政預測
         def_val, debt_val, cpi_val, rate_val = 5.8, 101.0, 3.9, 4.5
     elif scenario == "2022 疫情後大通膨":
@@ -216,3 +216,4 @@ with st.expander("📚 系統核心理論與 MARL 架構對照 (點擊展開)"):
     * **Policy (策略)**：透過實質利率判定貨幣立場，並比對赤字水位判斷是否發生衝突。
     * **Reward (獎勵)**：將通膨、赤字與政策協調度量化為具體分數，驅使 Agent 追求經濟穩定。
     """)
+ㄅ
