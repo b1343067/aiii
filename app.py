@@ -6,154 +6,205 @@ from datetime import datetime
 # ==========================================
 # 網頁基礎設定與樣式
 # ==========================================
-st.set_page_config(page_title="貨銀第八組 - 財政貨幣協調自主 Agent", layout="wide")
+st.set_page_config(page_title="貨銀第八組 - 財政貨幣協調 AI Agent", layout="wide")
 
 st.markdown("""
     <style>
     .main { background-color: #0e1117; color: #ffffff; }
-    .stButton>button { background-color: #ffd700; color: black; font-weight: bold; width: 100%; font-size: 20px;}
-    .live-alert { animation: blinker 1.5s linear infinite; color: #ff4b4b; font-weight: bold;}
-    @keyframes blinker { 50% { opacity: 0; } }
+    .stButton>button { background-color: #ffd700; color: black; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🏦 財政與貨幣政策自主監測 Agent")
-st.subheader("第八組專題：全自動總體經濟觀測站 (Autonomous Mode)")
+st.title("🏦 財政與貨幣政策協調 AI Agent")
+st.subheader("第八組專題：總體政策模擬決策系統")
 
 # ==========================================
-# 模擬實時數據流 (Data Stream)
+# 側邊欄：一鍵載入歷史經典情境與數據輸入
 # ==========================================
-# 模擬一個從「平穩」走向「通膨失控」，最後「成功壓制」的連續 6 個季度過程
-data_stream = [
-    {"time": "2023 Q1", "deficit": 3.0, "debt": 105.0, "cpi": 2.1, "rate": 2.0},
-    {"time": "2023 Q2", "deficit": 4.5, "debt": 108.0, "cpi": 4.5, "rate": 2.5},
-    {"time": "2023 Q3", "deficit": 6.2, "debt": 112.0, "cpi": 7.8, "rate": 3.0}, # 危機爆發，政策衝突
-    {"time": "2023 Q4", "deficit": 5.5, "debt": 115.0, "cpi": 8.5, "rate": 5.5}, # 央行猛烈升息
-    {"time": "2024 Q1", "deficit": 3.5, "debt": 116.0, "cpi": 4.2, "rate": 5.5}, # 財政收斂，通膨降溫
-    {"time": "2024 Q2", "deficit": 2.8, "debt": 116.5, "cpi": 2.5, "rate": 4.5}  # 軟著陸成功
-]
+with st.sidebar:
+    st.header("📂 情境資料庫")
+    scenario = st.selectbox("快速載入歷史情境", ["自訂輸入 (當前現況)", "2022 疫情後大通膨", "2008 金融海嘯"])
+    
+    if scenario == "2022 疫情後大通膨":
+        def_val, debt_val, cpi_val, rate_val = 12.3, 120.0, 9.1, 2.5
+    elif scenario == "2008 金融海嘯":
+        def_val, debt_val, cpi_val, rate_val = 9.8, 67.0, -0.4, 0.25
+    else:
+        def_val, debt_val, cpi_val, rate_val = 6.0, 123.0, 2.1, 5.5
 
-st.markdown("---")
-col_btn, col_status = st.columns([1, 3])
-with col_btn:
-    start_auto = st.button("▶️ 啟動 Agent 全自動監測")
-with col_status:
-    st.caption(f"🟢 系統狀態：待機中... | 🕒 當前時間：{datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    st.markdown("---")
+    st.header("📊 經濟數據觀測站")
+    
+    deficit_gdp = st.slider("財政赤字 / GDP (%)", min_value=0.0, max_value=20.0, value=float(def_val), step=0.1)
+    debt_gdp = st.slider("公債餘額 / GDP (%)", min_value=0.0, max_value=150.0, value=float(debt_val), step=0.1)
+    inflation = st.slider("通膨率 CPI (%)", min_value=-5.0, max_value=15.0, value=float(cpi_val), step=0.1)
+    policy_rate = st.slider("政策基準利率 (%)", min_value=0.0, max_value=10.0, value=float(rate_val), step=0.1)
+    
+    analyze_btn = st.button("啟動 AI 決策演算法")
+    
+    st.markdown("---")
+    st.caption(f"🕒 系統最後同步時間：{datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
-# 建立一個佔位符，用來在迴圈中不斷刷新畫面，創造「實時觀測」的視覺效果
-dashboard_placeholder = st.empty()
-
-if start_auto:
-    # 啟動自動監測迴圈
-    for step_data in data_stream:
-        with dashboard_placeholder.container():
-            # 讀取當前時間節點的數據
-            current_time = step_data["time"]
-            deficit_gdp = step_data["deficit"]
-            debt_gdp = step_data["debt"]
-            inflation = step_data["cpi"]
-            policy_rate = step_data["rate"]
-            
-            st.markdown(f"### 📡 實時截獲數據流：<span style='color:#ffd700'>{current_time}</span>", unsafe_allow_html=True)
-            
-            # -----------------------------------
-            # Agent 核心大腦邏輯 (Policy)
-            # -----------------------------------
-            if policy_rate <= 1.0:
-                monetary_stance = "極度寬鬆"
-            elif policy_rate > inflation + 1.0:
-                monetary_stance = "緊縮 (升息)"
-            elif policy_rate < inflation - 0.5:
-                monetary_stance = "寬鬆 (降息)"
-            else:
-                monetary_stance = "中性"
-                
-            is_conflict = False
-            action_suggestion = ""
-            
-            # 邏輯判定區
-            if inflation > 3.0 and deficit_gdp > 5.0:
-                is_conflict = True
-                action_suggestion = "❌ 偵測到嚴重政策衝突：通膨狂飆中，財政部卻維持高赤字擴張。建議立刻啟動【緊縮協調】，縮減政府支出！"
-            elif inflation > 3.0 and monetary_stance == "寬鬆 (降息)":
-                is_conflict = True
-                action_suggestion = "❌ 貨幣政策失誤：高通膨環境下央行利率過低，將導致通膨失控。"
-            elif inflation < 0.0 and monetary_stance == "極度寬鬆" and deficit_gdp > 5.0:
-                action_suggestion = "✅ 危機應對完美：通縮環境下雙寬鬆政策步調一致，無排擠效應風險。"
-            elif deficit_gdp <= 4.0 and inflation <= 3.0:
-                action_suggestion = "✅ 總體經濟平穩：財政與貨幣政策協調良好，建議維持現狀。"
-            else:
-                action_suggestion = "⚠️ 經濟震盪中：請持續監控排擠效應與通膨預期。"
-
-            # -----------------------------------
-            # MARL 獎勵函數算分 (Reward)
-            # -----------------------------------
-            reward_score = 100
-            if inflation > 3.0: 
-                reward_score -= 20
-            if deficit_gdp > 5.0 and inflation >= 0: 
-                reward_score -= 15
-            if is_conflict: 
-                reward_score -= 30
-            elif not is_conflict and inflation <= 3.0: 
-                reward_score += 10
-            
-            # 確保分數不超過 100
-            reward_score = min(reward_score, 100)
-
-            # -----------------------------------
-            # 儀表板 UI 渲染
-            # -----------------------------------
-            col1, col2 = st.columns([1, 1])
-            
-            with col1:
-                st.write("#### 📊 狀態空間感知 (State)")
-                m1, m2 = st.columns(2)
-                m1.metric(label="財政赤字 / GDP", value=f"{deficit_gdp}%", delta="-警戒" if deficit_gdp > 5.0 else "安全", delta_color="inverse")
-                m2.metric(label="通膨率 CPI", value=f"{inflation}%", delta="偏高" if inflation > 3.0 else "平穩", delta_color="inverse")
-                
-                m3, m4 = st.columns(2)
-                m3.metric(label="公債餘額 / GDP", value=f"{debt_gdp}%", delta="攀升", delta_color="inverse")
-                m4.metric(label="Agent 判定貨幣立場", value=monetary_stance, delta=f"基準利率 {policy_rate}%", delta_color="off")
-                
-            with col2:
-                st.write("#### 🧠 Agent 決策反饋 (Action & Reward)")
-                
-                # 動態警示標籤
-                if is_conflict:
-                    st.error(action_suggestion)
-                elif reward_score >= 80:
-                    st.success(action_suggestion)
-                else:
-                    st.warning(action_suggestion)
-                
-                st.divider()
-                st.write("🏆 **MARL 獎勵函數 (Reward) 評估**")
-                st.metric(label="Agent 總體協調得分", value=f"{reward_score} / 100", 
-                          delta="決策極佳" if reward_score >= 80 else ("需立即介入調整" if reward_score < 60 else "狀態普通"), 
-                          delta_color="normal" if reward_score >= 60 else "inverse")
-                
-            # 暫停 2.5 秒，讓台下有時間看清楚數據變動，然後進入下一個時間節點
-            time.sleep(2.5)
-
-    # 模擬結束後的最終狀態提示
-    st.toast('✅ 模擬監測完成！經濟已實現軟著陸。', icon='🎯')
-
+# ==========================================
+# 核心邏輯：AI 自動判斷貨幣政策立場 (實質利率)
+# ==========================================
+if policy_rate <= 1.0:
+    monetary_stance = "極度寬鬆"
+    rate_desc = f"零利率/QE ({policy_rate}%)" 
+elif policy_rate > inflation + 1.0:
+    monetary_stance = "緊縮 (升息)"
+    rate_desc = f"基準利率 {policy_rate}%"
+elif policy_rate < inflation - 0.5:
+    monetary_stance = "寬鬆 (降息)"
+    rate_desc = f"基準利率 {policy_rate}%"
 else:
-    # 待機畫面說明
-    with dashboard_placeholder.container():
-        st.info("👆 請點擊上方『啟動 Agent 全自動監測』按鈕，系統將自動掛載數據流，展示 Agent 的自主決策與算分過程。")
+    monetary_stance = "中性"
+    rate_desc = f"基準利率 {policy_rate}%"
+
+# ==========================================
+# 主畫面內容：狀態空間看板 (State)
+# ==========================================
+col1, col2 = st.columns([1, 1])
+
+with col1:
+    st.write("## 🏦") 
+    st.write("### 狀態空間 (State) 看板")
+    m1, m2 = st.columns(2)
+    m1.metric(label="財政赤字 / GDP", value=f"{deficit_gdp}%", delta="-警戒" if deficit_gdp > 5.0 else "安全", delta_color="inverse")
+    m2.metric(label="公債餘額 / GDP", value=f"{debt_gdp}%", delta="持續攀升", delta_color="inverse")
+    
+    st.caption("公債壓力指數")
+    progress_val = min(debt_gdp / 150.0, 1.0) 
+    st.progress(progress_val)
+    
+    m3, m4 = st.columns(2)
+    cpi_status = "偏高" if inflation > 2.0 else ("通縮警戒" if inflation < 0 else "達標")
+    m3.metric(label="通膨率 CPI", value=f"{inflation}%", delta=cpi_status, delta_color="inverse")
+    m4.metric(label="自動判定貨幣立場", value=monetary_stance, delta=rate_desc, delta_color="off")
+
+with col2:
+    st.write("### AI 決策網路 (Policy)")
+    if inflation < 0.0:
+        st.error("❄️ 觀測狀態：嚴重通縮與衰退風險，建議『全面寬鬆與擴張刺激』")
+    elif inflation > 3.0:
+        st.warning("⚠️ 觀測狀態：高通膨，系統優先尋求『緊縮協調』")
+    elif deficit_gdp > 5.0:
+        st.warning("🚨 觀測狀態：財政赤字偏高，啟動『排擠效應』風險預警")
+    else:
+        st.success("✅ 觀測狀態：總體經濟指標穩定")
 
 st.divider()
 
 # ==========================================
-# 理論與架構防禦說明區
+# AI 輸出區 (Action & Reward)
 # ==========================================
-with st.expander("📚 系統運作邏輯與 AI Agent 定義 (點擊展開)"):
-    st.markdown("""
-    **本系統展示了真正的 AI Agent 特徵，將傳統網頁升級為自動化決策系統：**
+if analyze_btn:
+    with st.spinner('🤖 AI Agent 正在進行政策模擬與協調性運算...'):
+        time.sleep(1.5) 
+    st.toast('決策分析完成！', icon='✅')
     
-    1. **自主感知 (Autonomous Perception)**：Agent 無須人工輸入，透過介接外部時序數據流（Data Stream），自動抓取經濟 `State`。
-    2. **動態策略判定 (Dynamic Policy)**：隨時間推移，Agent 的邏輯大腦能自動識別經濟從「平穩」到「通膨爆發」，再到「軟著陸」的各個階段，並發出對應警報。
-    3. **即時獎勵反饋 (Real-time Reward)**：基於《貨幣銀行學》與 MARL 架構，Agent 每季度會自動評估總體政策的協調性，計算出具體的 Reward 分數，驅動系統追求穩定性最大化。
+    st.write("## 🎯 AI Agent 決策報告 (Action)")
+    
+    # 【修改重點】拔除圖表，精簡為兩個高含金量的 Tabs
+    tab1, tab2 = st.tabs(["🎯 政策協調與調整建議", "📈 資本市場影響 (股市/債市)"])
+    
+    is_conflict = False
+    
+    # [Tab 1] 政策協調性分析 + 調整建議 (整併)
+    with tab1:
+        st.markdown("### 1. 政策協調性評估")
+        
+        if inflation < 0.0 and monetary_stance == "極度寬鬆" and deficit_gdp > 5.0:
+            st.success("✅ **非常規政策協調 (危機應對)**：系統偵測到通縮與衰退危機，央行已啟動極度寬鬆 (如 QE) 救市。此時政府擴大財政支出是必要手段，雙寬鬆政策完美協調。")
+        elif inflation > 3.0 and monetary_stance == "緊縮 (升息)" and deficit_gdp > 5.0:
+            st.error("❌ **政策衝突 (不協調)**：央行正在『升息』打通膨，但政府卻維持高赤字 (大撒幣)，兩者作用互相抵銷！建議政府應縮減支出以配合央行。")
+            is_conflict = True
+        elif inflation > 2.0 and ("寬鬆" in monetary_stance):
+            st.error("❌ **嚴重不協調**：目前通膨偏高，但貨幣政策卻放水，等於提油救火，將導致通膨失控。")
+            is_conflict = True
+        elif inflation < 0.0 and ("緊縮" in monetary_stance):
+            st.error("❌ **經濟衰退危機**：已出現通縮現象，央行卻持續緊縮，將引發嚴重經濟衰退。")
+            is_conflict = True
+        elif inflation < 2.0 and deficit_gdp < 3.0 and monetary_stance == "緊縮 (升息)":
+            st.warning("⚠️ **過度緊縮風險**：通膨已偏低且財政保守，若央行仍持續升息，恐壓抑經濟動能。")
+        else:
+            st.success("✅ **目前政策尚屬協調**：貨幣與財政步調相對一致，有助於維持總體經濟穩定。")
+            
+        st.divider()
+        
+        st.markdown("### 2. 排擠效應與調整建議")
+        if inflation < 0.0:
+            st.write("由於目前處於通縮與流動性陷阱邊緣，民間投資意願低落。此時政府擴大支出**不會產生排擠效應**。👉 **建議財政部持續發力刺激需求**。")
+        else:
+            st.write("若政府在此刻擴大財政刺激，預計會導致市場利率上升，進而產生**排擠效應**。👉 **建議央行應維持目前利率水準，防止債務貨幣化**。")
+        
+    # [Tab 2] 資本市場分析
+    with tab2:
+        st.markdown("### 資本市場風向預測")
+        if "緊縮" in monetary_stance:
+            st.error("📉 **股市預警**：高利率環境將大幅提升企業資金成本。對於大型科技股的估值將面臨下修壓力。建議關注大盤指數 ETF (如 VOO) 分散風險，並觀察大盤 30 週/50 週長天期均線是否有跌破風險，作為防禦性減碼依據。")
+            st.success("📈 **債市預測**：由於處於升息循環，債券殖利率將維持高檔，短天期公債具備吸引力。")
+        elif "寬鬆" in monetary_stance:
+            st.success("📈 **股市利多**：資金成本降低將有效挹注市場流動性。大盤指數 ETF有望受惠於資金行情，科技巨頭預期將迎來強勁反彈。技術面上，若大盤突破 30 週均線可視為長線佈局訊號。")
+            st.error("📉 **債市預測**：降息預期將帶動既有債券價格上漲，但新發行債券的殖利率將下滑。")
+        else:
+            st.info("⚖️ **市場觀望**：目前政策偏向中立，市場將回歸基本面檢視，大盤預期呈現區間震盪，建議維持既有步調與定期定額策略。")
+        
+    st.divider()
+    
+    # ==========================================
+    # 神級優化：MARL 系統獎勵函數 (Reward) 算分機制
+    # ==========================================
+    reward_score = 100 # 設定基礎分數為 100
+    score_reasons = []
+
+    # 1. 總體環境狀態評估 (State)
+    if inflation > 3.0:
+        reward_score -= 20
+        score_reasons.append("高通膨環境 (-20)")
+    elif inflation < 0:
+        reward_score -= 30
+        score_reasons.append("通縮衰退環境 (-30)")
+
+    # 2. 財政健康度評估 (排除通縮救市時的高赤字特例)
+    if deficit_gdp > 5.0 and inflation >= 0:
+        reward_score -= 15
+        score_reasons.append("排擠效應風險 (-15)")
+
+    # 3. 政策協調度評估 (Action)
+    if is_conflict:
+        reward_score -= 30
+        score_reasons.append("政策衝突懲罰 (-30)")
+    elif inflation < 0.0 and monetary_stance == "極度寬鬆" and deficit_gdp > 5.0:
+        reward_score += 15 # 完美救市給予加分補償
+        score_reasons.append("危機完美救市獎勵 (+15)")
+    else:
+        score_reasons.append("政策維持協調 (+0)")
+
+    # 確保分數上限不超過 100 分
+    reward_score = min(reward_score, 100)
+
+    st.markdown("#### 🏆 MARL 系統獎勵函數 (Reward) 評估")
+    st.write("Agent 在多智能體強化學習中，透過最大化總體經濟的穩定性來獲取最高 Reward。")
+    
+    # 顯示總得分
+    st.metric(label="Agent 當前決策網路總得分", value=f"{reward_score} / 100", 
+              delta="決策極佳" if reward_score >= 85 else ("需調整政策" if reward_score < 70 else "狀態普通"), 
+              delta_color="normal" if reward_score >= 70 else "inverse")
+    
+    st.caption(f"🧠 **模型算分依據**：基礎分數 100 分。本次結算包含：{', '.join(score_reasons)}。")
+
+else:
+    st.info("👈 請於左側設定觀測指標，並點擊『啟動 AI 決策演算法』")
+
+# ==========================================
+# 理論補充區
+# ==========================================
+with st.expander("📚 系統核心理論與 MARL 架構對照 (點擊展開)"):
+    st.markdown("""
+    **本系統基於《貨幣銀行學》理論與 MARL 架構開發：**
+    * **Agent (智能體)**：G8 財政貨幣協調決策系統。
+    * **State (狀態)**：左側輸入之赤字率、債務比、通膨率與利率。
+    * **Policy (策略)**：透過實質利率 (基準利率-通膨率) 判定貨幣立場，並比對赤字水位判斷是否發生衝突。
+    * **Reward (獎勵)**：將通膨、赤字與政策協調度量化為具體分數，驅使 Agent 追求經濟穩定。
     """)
