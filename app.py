@@ -30,7 +30,7 @@ with st.sidebar:
         "2008 金融海嘯"
     ])
     
-    # 根據選擇載入對應數據 (已更新為指定數據)
+    # 根據選擇載入對應數據
     if scenario == "最新總經現況":
         def_val, debt_val, cpi_val, rate_val = 6.0, 123.0, 3.8, 3.5
     elif scenario == "2022 疫情後大通膨":
@@ -152,11 +152,9 @@ if analyze_btn:
     with tab3:
         st.markdown("### 🔮 基於當前 State 的未來經濟路徑推演模型")
         
-        # 定義時間序列與預測邏輯
         periods = ["0. 當前 (Now)", "1. Q1 (預測)", "2. Q2 (預測)", "3. Q3 (預測)"]
         
         if inflation > 3.0 and deficit_gdp > 5.0:
-            # 高通膨+高赤字：螺旋上升
             cpi_trend = [inflation, inflation+0.5, inflation+1.2, inflation+1.8]
             rate_trend = [policy_rate, policy_rate+0.5, policy_rate+1.25, policy_rate+2.0]
             def_trend = [deficit_gdp, deficit_gdp+0.2, deficit_gdp+0.5, deficit_gdp+0.8]
@@ -166,7 +164,6 @@ if analyze_btn:
             desc_3 = "爆發嚴重『排擠效應』，民間企業融資成本過高引發倒閉潮，經濟面臨硬著陸。"
             
         elif inflation < 0.0 and monetary_stance == "極度寬鬆" and deficit_gdp > 5.0:
-            # 完美救市：通膨回穩，赤字下降
             cpi_trend = [inflation, inflation+1.0, inflation+2.0, 2.0] 
             rate_trend = [policy_rate, policy_rate, policy_rate+0.25, policy_rate+0.5]
             def_trend = [deficit_gdp, deficit_gdp-1.0, deficit_gdp-2.0, deficit_gdp-3.0]
@@ -176,7 +173,6 @@ if analyze_btn:
             desc_3 = "成功脫離流動性陷阱，通膨溫和回升至 2% 目標。"
             
         elif inflation <= 3.0 and deficit_gdp > 5.0:
-            # 軟著陸但財政拖累
             cpi_trend = [inflation, inflation+0.2, inflation+0.5, inflation+0.8] 
             rate_trend = [policy_rate, policy_rate, policy_rate+0.25, policy_rate+0.25] 
             def_trend = [deficit_gdp, deficit_gdp, deficit_gdp+0.2, deficit_gdp+0.5] 
@@ -186,7 +182,6 @@ if analyze_btn:
             desc_3 = "若不縮減赤字，經濟將從目前的『軟著陸』轉為『停滯性增長』。"
             
         else:
-            # 平穩擴張
             cpi_trend = [inflation, 2.0, 2.0, 2.0]
             rate_trend = [policy_rate, policy_rate, policy_rate, policy_rate]
             def_trend = [deficit_gdp, max(0, deficit_gdp-0.5), max(0, deficit_gdp-1.0), 3.0]
@@ -195,7 +190,6 @@ if analyze_btn:
             desc_2 = "企業投資意願穩定，失業率維持低檔。"
             desc_3 = "國家經濟維持健康擴張步調。"
 
-        # 建立 DataFrame 並繪製折線圖
         df_forecast = pd.DataFrame({
             "預估通膨率 CPI (%)": cpi_trend,
             "預估基準利率 (%)": rate_trend,
@@ -203,11 +197,7 @@ if analyze_btn:
         }, index=periods)
         
         st.write(f"#### {status_title}")
-        
-        # 顯示圖表
         st.line_chart(df_forecast, use_container_width=True)
-        
-        # 顯示文字說明
         st.markdown(f"- **近期 (Q1)**：{desc_1}")
         st.markdown(f"- **中期 (Q2)**：{desc_2}")
         st.markdown(f"- **遠期 (Q3)**：{desc_3}")
@@ -267,3 +257,19 @@ if analyze_btn:
 
 else:
     st.info("👈 請於左側設定觀測指標，並點擊『啟動 AI 決策與未來預測』")
+
+# ==========================================
+# 資料來源與理論補充區 (新增財經M平方來源)
+# ==========================================
+st.markdown("---")
+st.markdown("###### 🔗 資料來源聲明")
+st.caption("本系統之「最新總經現況」與歷史情境數據，皆參考自 **[財經M平方 (MacroMicro)](https://www.macromicro.me/)** 之全球總經觀測站與預測模型。")
+
+with st.expander("📚 系統核心理論與 MARL 架構對照 (點擊展開)"):
+    st.markdown("""
+    **本系統基於《貨幣銀行學》理論與 MARL 架構開發：**
+    * **Agent (智能體)**：G8 財政貨幣協調決策與預測系統。
+    * **State (狀態)**：左側輸入之赤字率、債務比、通膨率與利率。
+    * **Policy (策略)**：透過實質利率判定貨幣立場，並預測未來的政策交互影響。
+    * **Reward (獎勵)**：將未來的通膨、赤字與排擠效應量化為具體分數，驅使 Agent 尋求最佳政策路徑。
+    """)
