@@ -23,18 +23,18 @@ st.subheader("第八組專題：總體政策模擬決策系統")
 # ==========================================
 with st.sidebar:
     st.header("📂 情境資料庫")
-    # 將「6月最新預測」加入選單並作為第一個預設選項
+    # 專業版命名，無贅字
     scenario = st.selectbox("快速載入歷史情境", [
-        "2026年6月 最新預測 (教授指定)", 
+        "2026年6月 最新總經現況", 
         "自訂輸入 (當前現況)", 
         "2022 疫情後大通膨", 
         "2008 金融海嘯"
     ])
     
     # 根據選擇載入對應數據
-    if scenario == "2026年最新預測 ":
-        # 黃金預測數據：克里夫蘭聯準會 CPI 預測 + CBO 財政預測
-        def_val, debt_val, cpi_val, rate_val = 5.8, 101.0, 3.9, 4.5
+    if scenario == "2026年6月 最新總經現況":
+        # 2026 最新真實數據：Fed 點陣圖 + CBO 財政展望
+        def_val, debt_val, cpi_val, rate_val = 6.0, 105.0, 2.4, 3.5
     elif scenario == "2022 疫情後大通膨":
         def_val, debt_val, cpi_val, rate_val = 12.3, 120.0, 9.1, 2.5
     elif scenario == "2008 金融海嘯":
@@ -68,7 +68,6 @@ elif policy_rate < inflation - 0.5:
     monetary_stance = "寬鬆 (降息)"
     rate_desc = f"基準利率 {policy_rate}%"
 else:
-    # 這裡已經修正為「中立」，解決畫面排版被切斷的問題
     monetary_stance = "中立"
     rate_desc = f"基準利率 {policy_rate}%"
 
@@ -129,6 +128,8 @@ if analyze_btn:
         elif inflation > 3.0 and deficit_gdp > 5.0:
             st.error("❌ **政策衝突 (不協調)**：系統偵測到通膨依然高於目標，但政府卻維持高赤字 (大撒幣)。擴張性財政政策將抵銷抗通膨的努力！建議政府必須縮減支出，配合央行步調。")
             is_conflict = True
+        elif inflation <= 3.0 and deficit_gdp > 5.0 and ("緊縮" in monetary_stance):
+            st.warning("⚠️ **財政拖累風險**：通膨已逐漸受控，央行維持高利率，但政府赤字依然過高。這將導致市場利率居高不下，引發長期排擠效應。")
         elif inflation > 2.0 and ("寬鬆" in monetary_stance):
             st.error("❌ **嚴重不協調**：目前通膨偏高，但貨幣政策卻放水，等於提油救火，將導致通膨失控。")
             is_conflict = True
@@ -216,4 +217,3 @@ with st.expander("📚 系統核心理論與 MARL 架構對照 (點擊展開)"):
     * **Policy (策略)**：透過實質利率判定貨幣立場，並比對赤字水位判斷是否發生衝突。
     * **Reward (獎勵)**：將通膨、赤字與政策協調度量化為具體分數，驅使 Agent 追求經濟穩定。
     """)
-ㄅ
